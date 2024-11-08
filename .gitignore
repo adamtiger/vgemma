@@ -1,3 +1,9 @@
+
+**/build
+
+# Vulkan related
+*.spv
+
 # Prerequisites
 *.d
 
