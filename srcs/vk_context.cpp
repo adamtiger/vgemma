@@ -132,6 +132,9 @@ std::string stringify_physical_device_props(const VkPhysicalDevice& pd)
 	ss << "\n";
 
 	ss << "   maxComputeSharedMemorySize:     " << pd_props.limits.maxComputeSharedMemorySize << "\n";
+	ss << "   maxComputeWorkGroupSize.x:      " << pd_props.limits.maxComputeWorkGroupSize[0] << "\n";
+	ss << "   maxComputeWorkGroupSize.y:      " << pd_props.limits.maxComputeWorkGroupSize[1] << "\n";
+	ss << "   maxComputeWorkGroupSize.z:      " << pd_props.limits.maxComputeWorkGroupSize[2] << "\n";
 
 	return ss.str();
 }
