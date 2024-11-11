@@ -10,6 +10,7 @@ Tensor crt_tensor(
 	t.dtype = dtype;
 	t.shape = shape;
 	t.stride = calc_default_stride(shape);
+	t.dim = (u64)shape.size();
 
 	u64 buffer_size = calc_tensor_size(t);
 
@@ -64,9 +65,10 @@ Tensor crt_tensor(
 }
 
 
-void destroy_tensor(Tensor& t)
+void destroy_tensor(const Context& ctx, Tensor& t)
 {
-
+	vkDestroyBuffer(ctx.ldevice, t.buffer, nullptr);
+	vkFreeMemory(ctx.ldevice, t.memory, nullptr);
 }
 
 
@@ -94,29 +96,54 @@ void copy_to_gpu(const Context& ctx, Tensor& t, const std::vector<i64>& hdata)
 
 void copy_to_cpu(const Context& ctx, const Tensor& t, std::vector<f32>& hdata)
 {
+	f32* gpu_data;
+	vkMapMemory(ctx.ldevice, t.memory, 0, VK_WHOLE_SIZE, 0, (void**)&gpu_data);
 
+	memcpy(hdata.data(), gpu_data, calc_tensor_size(t));
+
+	vkUnmapMemory(ctx.ldevice, t.memory);
 }
 
 
 void copy_to_cpu(const Context& ctx, const Tensor& t, std::vector<i64>& hdata)
 {
+	i64* gpu_data;
+	vkMapMemory(ctx.ldevice, t.memory, 0, VK_WHOLE_SIZE, 0, (void**)&gpu_data);
 
+	memcpy(hdata.data(), gpu_data, calc_tensor_size(t));
+
+	vkUnmapMemory(ctx.ldevice, t.memory);
 }
 
 
 u64 calc_tensor_size(const Tensor& t)
 {
-	return 0;
+	return t.shape[0] * t.stride[0] * get_datatype_size(t.dtype);
 }
 
 
 u64 count_tensor_elements(const Tensor& t)
 {
-	return 0;
+	u64 elements_num = 1;
+	for (u64 s : t.shape)
+	{
+		elements_num *= s;
+	}
+
+	return elements_num;
 }
 
 
 std::vector<u64> calc_default_stride(const std::vector<u64>& shape)
 {
-	return {};
+	size_t dim = shape.size();
+	std::vector<u64> stride(shape.size());
+
+	stride[dim - 1] = 1;
+	for (size_t ix = dim - 2; ix >= 0; ++ix)
+	{
+		stride[ix] = shape[ix + 1] * stride[ix + 1];
+	}
+
+	return stride;
 }

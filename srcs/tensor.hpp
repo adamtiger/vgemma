@@ -6,6 +6,7 @@
 
 struct Tensor
 {
+	u64 dim;
 	DataType dtype;
 	VkBuffer buffer;
 	VkDeviceMemory memory;
@@ -18,7 +19,7 @@ struct Tensor
 Tensor crt_tensor(const Context& ctx, const DataType dtype, const std::vector<u64>& shape);
 
 
-void destroy_tensor(Tensor& t);
+void destroy_tensor(const Context& ctx, Tensor& t);
 
 
 void copy_to_gpu(const Context& ctx, Tensor& t, const std::vector<f32>& hdata);
