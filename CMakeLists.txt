@@ -28,12 +28,14 @@ set(SRCS_DIR ${VGEMMA_ROOT}/srcs)
 set (SRCS_SRCS
 	${SRCS_DIR}/tensor.cpp
     ${SRCS_DIR}/vk_context.cpp
+    ${SRCS_DIR}/vk_op.cpp
 )
 
 set (SRCS_HEADERS
     ${SRCS_DIR}/core.hpp
 	${SRCS_DIR}/tensor.hpp
     ${SRCS_DIR}/vk_context.hpp
+    ${SRCS_DIR}/vk_op.hpp
 )
 
 source_group("srcs" FILES ${SRCS_HEADERS} ${SRCS_SRCS})

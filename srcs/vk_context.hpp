@@ -14,9 +14,12 @@ struct Context
 };
 
 
+void destroy_context(Context& ctx);
+
 // Defines app info and vulkan instance.
 // (version: >1.3)
 void crt_instance(Context& ctx);
+
 
 // Selects an appropriate device.
 // Device with compute pipeline support.

@@ -1,5 +1,12 @@
 #include "vk_context.hpp"
 
+void destroy_context(Context& ctx)
+{
+	vkDestroyDevice(ctx.ldevice, nullptr);
+	vkDestroyInstance(ctx.instance, nullptr);
+}
+
+
 void crt_instance(Context& ctx)
 {
 	ctx.app_info.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
