@@ -17,6 +17,12 @@ private:
 
 	Context& ctx;
 
+	VkDescriptorSetLayout descr_set_layout;
+	VkDescriptorPool descr_pool;
+	VkDescriptorSet descriptor_set;
+	VkPipelineLayout pipeline_layout;
+	VkPipeline compute_pipeline;
+
 	VkCommandPool cmd_pool;
 	VkCommandBuffer cmd_buffer;
 
@@ -28,6 +34,8 @@ private:
 	void crt_fence();
 	void crt_submit_info();
 	void crt_cmd_buffer();
+
+	void crt_descriptor_set(const std::vector<Tensor>& tensors);
 };
 
 
