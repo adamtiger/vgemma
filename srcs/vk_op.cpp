@@ -1,8 +1,13 @@
 #include "vk_op.hpp"
 
 
-Operator::Operator(Context& ctx) : ctx(ctx)
+Operator::Operator(Context& ctx, const std::vector<Tensor>& op_tensors) : ctx(ctx)
 {
+	crt_descriptor_set(op_tensors);
+	crt_compute_pipeline();
+
+	crt_cmd_buffer();
+
 	vkGetDeviceQueue(ctx.ldevice, ctx.queue_fam_idx, 0, &queue);
 
 	crt_fence();
@@ -11,6 +16,14 @@ Operator::Operator(Context& ctx) : ctx(ctx)
 
 Operator::~Operator()
 {
+	vkDestroyShaderModule(ctx.ldevice, shader, nullptr);
+	vkFreeDescriptorSets(ctx.ldevice, descr_pool, 1, &descriptor_set);
+	vkDestroyDescriptorSetLayout(ctx.ldevice, descr_set_layout, nullptr);
+	vkDestroyDescriptorPool(ctx.ldevice, descr_pool, nullptr);
+	
+	vkDestroyPipelineLayout(ctx.ldevice, pipeline_layout, nullptr);
+	vkDestroyPipeline(ctx.ldevice, compute_pipeline, nullptr);
+
 	vkFreeCommandBuffers(ctx.ldevice, cmd_pool, 1, &cmd_buffer);
 	vkDestroyCommandPool(ctx.ldevice, cmd_pool, nullptr);
 	vkDestroyFence(ctx.ldevice, fence, nullptr);
@@ -63,7 +76,15 @@ void Operator::crt_cmd_buffer()
 
 	/* TODO: record the relevant parts */
 
-	vkCmdDispatch(cmd_buffer, 1, 1, 1);  // should be calculated
+	vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+
+	vkCmdBindPipeline(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute_pipeline);
+
+	bind_push_constants();
+
+	u32 gx, gy, gz;
+	calc_group_sizes(gx, gy, gz);
+	vkCmdDispatch(cmd_buffer, gx, gy, gz);
 
 	CHECK(vkEndCommandBuffer(cmd_buffer));
 }
@@ -132,5 +153,50 @@ void Operator::crt_descriptor_set(const std::vector<Tensor>& tensors)
 	}
 
 	vkUpdateDescriptorSets(ctx.ldevice, wrt_descr_sets.size(), wrt_descr_sets.data(), 0, nullptr);
+}
+
+void Operator::crt_compute_pipeline()
+{
+	// create pipeline layout
+	auto push_const_ranges = crt_push_constants();
+
+	VkPipelineLayoutCreateInfo pipeline_layout_crti = {};
+	pipeline_layout_crti.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipeline_layout_crti.setLayoutCount = 1;
+	pipeline_layout_crti.pSetLayouts = &descr_set_layout;
+	pipeline_layout_crti.pushConstantRangeCount = push_const_ranges.size();
+	pipeline_layout_crti.pPushConstantRanges = push_const_ranges.data();
+
+	CHECK(vkCreatePipelineLayout(ctx.ldevice, &pipeline_layout_crti, nullptr, &pipeline_layout));
+
+
+	// load shader from file
+	std::ifstream shader_code_file(shader_path, std::ios::ate | std::ios::binary);
+	int code_size = shader_code_file.tellg();
+	shader_code_file.seekg(0);
+	shader_code.resize(code_size);
+	shader_code_file.read(shader_code.data(), code_size);
+
+	VkShaderModuleCreateInfo shader_crti = {};
+	shader_crti.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	shader_crti.codeSize = code_size;
+	shader_crti.pCode = reinterpret_cast<u32*>(shader_code.data());
+
+	CHECK(vkCreateShaderModule(ctx.ldevice, &shader_crti, nullptr, &shader));
+
+
+	// comp pipeline build
+	VkPipelineShaderStageCreateInfo pipeline_shader_stage_crti = {};
+	pipeline_shader_stage_crti.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	pipeline_shader_stage_crti.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+	pipeline_shader_stage_crti.pName = "main";  // TODO: can be a constant string
+	pipeline_shader_stage_crti.module = shader;
+
+	VkComputePipelineCreateInfo comp_pipeline_crti = {};
+	comp_pipeline_crti.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	comp_pipeline_crti.layout = pipeline_layout;
+	comp_pipeline_crti.stage = pipeline_shader_stage_crti;
+
+	CHECK(vkCreateComputePipelines(ctx.ldevice, VK_NULL_HANDLE, 1, &comp_pipeline_crti, nullptr, &compute_pipeline));
 }
 
