@@ -8,20 +8,24 @@ struct Operator
 	std::vector<Tensor> inputs;
 	std::vector<Tensor> outputs;
 
-	explicit Operator(Context& ctx, const std::vector<Tensor>& op_tensors);
+	explicit Operator(Context& ctx);
 	~Operator();
 
 	void execute();
 
-private:
+protected:
 
 	Context& ctx;
 
+	std::vector<VkDescriptorSetLayoutBinding> bindings;
+	std::vector<VkDescriptorBufferInfo> buf_infos;
+	std::vector<VkWriteDescriptorSet> wrt_descr_sets;
 	VkDescriptorSetLayout descr_set_layout;
 	VkDescriptorPool descr_pool;
 	VkDescriptorSet descriptor_set;
 	VkPipelineLayout pipeline_layout;
 	VkPipeline compute_pipeline;
+	std::vector<VkPushConstantRange> push_const_ranges;
 	
 	std::string shader_path;
 	VkShaderModule shader;
@@ -41,6 +45,8 @@ private:
 
 	void crt_descriptor_set(const std::vector<Tensor>& tensors);
 	void crt_compute_pipeline();
+
+	void init_op();
 
 	virtual std::vector<Tensor> list_tensors() = 0;
 	virtual void calc_group_sizes(u32& gx, u32& gy, u32& gz) = 0;

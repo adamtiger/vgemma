@@ -96,6 +96,8 @@ void copy_to_gpu(const Context& ctx, Tensor& t, const std::vector<i64>& hdata)
 
 void copy_to_cpu(const Context& ctx, const Tensor& t, std::vector<f32>& hdata)
 {
+	hdata.resize(count_tensor_elements(t));
+
 	f32* gpu_data;
 	vkMapMemory(ctx.ldevice, t.memory, 0, VK_WHOLE_SIZE, 0, (void**)&gpu_data);
 
@@ -107,6 +109,8 @@ void copy_to_cpu(const Context& ctx, const Tensor& t, std::vector<f32>& hdata)
 
 void copy_to_cpu(const Context& ctx, const Tensor& t, std::vector<i64>& hdata)
 {
+	hdata.resize(count_tensor_elements(t));
+
 	i64* gpu_data;
 	vkMapMemory(ctx.ldevice, t.memory, 0, VK_WHOLE_SIZE, 0, (void**)&gpu_data);
 
@@ -136,14 +140,28 @@ u64 count_tensor_elements(const Tensor& t)
 
 std::vector<u64> calc_default_stride(const std::vector<u64>& shape)
 {
-	size_t dim = shape.size();
+	int dim = shape.size();
 	std::vector<u64> stride(shape.size());
 
 	stride[dim - 1] = 1;
-	for (size_t ix = dim - 2; ix >= 0; ++ix)
+	for (int ix = dim - 2; ix >= 0; --ix)
 	{
 		stride[ix] = shape[ix + 1] * stride[ix + 1];
 	}
 
 	return stride;
+}
+
+
+void print_tensor(Context& ctx, const Tensor& t)
+{
+	std::vector<f32> hdata;
+	copy_to_cpu(ctx, t, hdata);
+	
+	for (auto d : hdata)
+	{
+		std::cout << d << ", ";
+	}
+
+	std::cout << std::endl;
 }

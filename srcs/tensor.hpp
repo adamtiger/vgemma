@@ -41,3 +41,6 @@ u64 count_tensor_elements(const Tensor& t);
 
 
 std::vector<u64> calc_default_stride(const std::vector<u64>& shape);
+
+
+void print_tensor(Context& ctx, const Tensor& t);

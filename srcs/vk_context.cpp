@@ -1,5 +1,17 @@
 #include "vk_context.hpp"
 
+Context create_context()
+{
+	Context ctx = {};
+
+	crt_instance(ctx);
+	crt_physical_device(ctx);
+	crt_logical_device(ctx);
+
+	return ctx;
+}
+
+
 void destroy_context(Context& ctx)
 {
 	vkDestroyDevice(ctx.ldevice, nullptr);

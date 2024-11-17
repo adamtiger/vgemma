@@ -21,6 +21,15 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(VGEMMA_ROOT ${CMAKE_CURRENT_LIST_DIR})
 
 
+# shaders
+set(SHADER_DIR ${VGEMMA_ROOT}/shaders)
+
+set (SHADER_FILES
+    ${SHADER_DIR}/vk_op_relu_f32.comp
+)
+
+source_group("shaders" FILES ${SHADER_FILES})
+
 # srcs
 
 set(SRCS_DIR ${VGEMMA_ROOT}/srcs)
@@ -29,6 +38,7 @@ set (SRCS_SRCS
 	${SRCS_DIR}/tensor.cpp
     ${SRCS_DIR}/vk_context.cpp
     ${SRCS_DIR}/vk_op.cpp
+    ${SRCS_DIR}/vk_op_unary.cpp
 )
 
 set (SRCS_HEADERS
@@ -36,6 +46,7 @@ set (SRCS_HEADERS
 	${SRCS_DIR}/tensor.hpp
     ${SRCS_DIR}/vk_context.hpp
     ${SRCS_DIR}/vk_op.hpp
+    ${SRCS_DIR}/vk_op_unary.hpp
 )
 
 source_group("srcs" FILES ${SRCS_HEADERS} ${SRCS_SRCS})
@@ -70,7 +81,7 @@ if (MSVC OR CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
     set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} /MDd")
 endif()
 
-add_executable(vgemma ${SOURCES} ${HEADERS})
+add_executable(vgemma ${SOURCES} ${HEADERS} ${SHADER_FILES})
 target_include_directories(
     vgemma PUBLIC ${Vulkan_INCLUDE_DIR}
 	${SRCS_DIR} ${TEST_DIR} 

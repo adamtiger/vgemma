@@ -13,6 +13,7 @@ struct Context
 	u32 queue_fam_idx;
 };
 
+Context create_context();
 
 void destroy_context(Context& ctx);
 

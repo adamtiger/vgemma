@@ -1,17 +1,8 @@
 #include "vk_op.hpp"
 
 
-Operator::Operator(Context& ctx, const std::vector<Tensor>& op_tensors) : ctx(ctx)
+Operator::Operator(Context& ctx) : ctx(ctx)
 {
-	crt_descriptor_set(op_tensors);
-	crt_compute_pipeline();
-
-	crt_cmd_buffer();
-
-	vkGetDeviceQueue(ctx.ldevice, ctx.queue_fam_idx, 0, &queue);
-
-	crt_fence();
-	crt_submit_info();
 }
 
 Operator::~Operator()
@@ -33,6 +24,7 @@ Operator::~Operator()
 void Operator::execute()
 {
 	CHECK(vkQueueSubmit(queue, 1, &submit_info, fence));
+	CHECK(vkWaitForFences(ctx.ldevice, 1, &fence, VK_TRUE, 100000000));  // nanoseconds
 }
 
 
@@ -45,7 +37,7 @@ void Operator::crt_fence()
 
 void Operator::crt_submit_info()
 {
-	VkSubmitInfo submit_info = {};
+	submit_info = {};
 	submit_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers = &cmd_buffer;
@@ -74,7 +66,7 @@ void Operator::crt_cmd_buffer()
 	cmd_buf_begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	CHECK(vkBeginCommandBuffer(cmd_buffer, &cmd_buf_begin_info));
 
-	/* TODO: record the relevant parts */
+	/* record the relevant parts */
 
 	vkCmdBindDescriptorSets(cmd_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
@@ -92,7 +84,6 @@ void Operator::crt_cmd_buffer()
 void Operator::crt_descriptor_set(const std::vector<Tensor>& tensors)
 {
 	// create bindings
-	std::vector<VkDescriptorSetLayoutBinding> bindings;
 	bindings.reserve(tensors.size());
 	for (u32 bix = 0; bix < tensors.size(); ++bix)
 	{
@@ -132,7 +123,6 @@ void Operator::crt_descriptor_set(const std::vector<Tensor>& tensors)
 	CHECK(vkAllocateDescriptorSets(ctx.ldevice, &descr_set_alloci, &descriptor_set));
 
 	// connect the tensor buffer to the descriptor set
-	std::vector<VkWriteDescriptorSet> wrt_descr_sets;
 	wrt_descr_sets.reserve(tensors.size());
 	for (u32 ix = 0; ix < tensors.size(); ++ix)
 	{
@@ -141,13 +131,15 @@ void Operator::crt_descriptor_set(const std::vector<Tensor>& tensors)
 		buf_info.offset = 0;
 		buf_info.range = VK_WHOLE_SIZE;
 
+		buf_infos.push_back(buf_info);  // TODO: without this, memory disappears in the below part
+
 		VkWriteDescriptorSet wrt_descr_set = {};
 		wrt_descr_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		wrt_descr_set.dstBinding = ix;
 		wrt_descr_set.dstSet = descriptor_set;
 		wrt_descr_set.descriptorCount = 1;
 		wrt_descr_set.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-		wrt_descr_set.pBufferInfo = &buf_info;
+		wrt_descr_set.pBufferInfo = &buf_infos[ix];
 
 		wrt_descr_sets.push_back(wrt_descr_set);
 	}
@@ -158,8 +150,6 @@ void Operator::crt_descriptor_set(const std::vector<Tensor>& tensors)
 void Operator::crt_compute_pipeline()
 {
 	// create pipeline layout
-	auto push_const_ranges = crt_push_constants();
-
 	VkPipelineLayoutCreateInfo pipeline_layout_crti = {};
 	pipeline_layout_crti.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	pipeline_layout_crti.setLayoutCount = 1;
@@ -200,3 +190,17 @@ void Operator::crt_compute_pipeline()
 	CHECK(vkCreateComputePipelines(ctx.ldevice, VK_NULL_HANDLE, 1, &comp_pipeline_crti, nullptr, &compute_pipeline));
 }
 
+void Operator::init_op()
+{
+	crt_descriptor_set(list_tensors());
+
+	push_const_ranges = crt_push_constants();
+	crt_compute_pipeline();
+
+	crt_cmd_buffer();
+
+	vkGetDeviceQueue(ctx.ldevice, ctx.queue_fam_idx, 0, &queue);
+
+	crt_fence();
+	crt_submit_info();
+}
