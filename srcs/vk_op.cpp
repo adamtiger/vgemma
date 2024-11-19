@@ -84,6 +84,7 @@ void Operator::crt_cmd_buffer()
 void Operator::crt_descriptor_set(const std::vector<Tensor>& tensors)
 {
 	// create bindings
+	std::vector<VkDescriptorSetLayoutBinding> bindings;
 	bindings.reserve(tensors.size());
 	for (u32 bix = 0; bix < tensors.size(); ++bix)
 	{
@@ -122,7 +123,9 @@ void Operator::crt_descriptor_set(const std::vector<Tensor>& tensors)
 
 	CHECK(vkAllocateDescriptorSets(ctx.ldevice, &descr_set_alloci, &descriptor_set));
 
-	// connect the tensor buffer to the descriptor set
+	// connect the tensor buffer to the descriptor 
+	std::vector<VkDescriptorBufferInfo> buf_infos;
+	std::vector<VkWriteDescriptorSet> wrt_descr_sets;
 	wrt_descr_sets.reserve(tensors.size());
 	for (u32 ix = 0; ix < tensors.size(); ++ix)
 	{
@@ -147,7 +150,7 @@ void Operator::crt_descriptor_set(const std::vector<Tensor>& tensors)
 	vkUpdateDescriptorSets(ctx.ldevice, wrt_descr_sets.size(), wrt_descr_sets.data(), 0, nullptr);
 }
 
-void Operator::crt_compute_pipeline()
+void Operator::crt_compute_pipeline(const std::vector<VkPushConstantRange>& push_const_ranges)
 {
 	// create pipeline layout
 	VkPipelineLayoutCreateInfo pipeline_layout_crti = {};
@@ -194,8 +197,8 @@ void Operator::init_op()
 {
 	crt_descriptor_set(list_tensors());
 
-	push_const_ranges = crt_push_constants();
-	crt_compute_pipeline();
+	auto push_const_ranges = crt_push_constants();
+	crt_compute_pipeline(push_const_ranges);
 
 	crt_cmd_buffer();
 

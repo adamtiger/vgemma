@@ -15,10 +15,16 @@ int main()
 	copy_to_gpu(ctx, x, x_data);
 
 	Tensor y = crt_tensor(ctx, DataType::FLOAT32, { 2, 3 });
-	std::vector<f32> y_data = { 0.f, 0.f, 0.f, 0.f, 0.f, 0.f };
-	copy_to_gpu(ctx, y, y_data);
 
 	Relu relu(ctx, x, y);
+	relu.execute();
+
+	print_tensor(ctx, x);
+	print_tensor(ctx, y);
+
+
+	std::vector<f32> x2_data = { -8.f, 4.f, -1.f, 2.f, -9.f, 5.f };
+	copy_to_gpu(ctx, x, x2_data);
 	relu.execute();
 
 	print_tensor(ctx, x);

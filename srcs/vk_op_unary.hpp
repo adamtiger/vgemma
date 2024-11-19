@@ -3,9 +3,9 @@
 #include "vk_op.hpp"
 
 
-struct Relu : public Operator
+struct Elementwise : public Operator
 {
-	explicit Relu(Context& ctx, const Tensor& x, Tensor& y);
+	explicit Elementwise(Context& ctx, const std::string& shader_path, const Tensor& x, Tensor& y);
 
 	Tensor x;
 	Tensor y;
@@ -18,4 +18,10 @@ protected:
 	virtual void bind_push_constants();
 
 	i32 push_const_data[1];  // contains the length of the tensor
+};
+
+
+struct Relu : public Elementwise
+{
+	explicit Relu(Context& ctx, const Tensor& x, Tensor& y);
 };

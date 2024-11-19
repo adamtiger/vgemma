@@ -17,15 +17,11 @@ protected:
 
 	Context& ctx;
 
-	std::vector<VkDescriptorSetLayoutBinding> bindings;
-	std::vector<VkDescriptorBufferInfo> buf_infos;
-	std::vector<VkWriteDescriptorSet> wrt_descr_sets;
 	VkDescriptorSetLayout descr_set_layout;
 	VkDescriptorPool descr_pool;
 	VkDescriptorSet descriptor_set;
 	VkPipelineLayout pipeline_layout;
 	VkPipeline compute_pipeline;
-	std::vector<VkPushConstantRange> push_const_ranges;
 	
 	std::string shader_path;
 	VkShaderModule shader;
@@ -44,7 +40,7 @@ protected:
 	void crt_cmd_buffer();
 
 	void crt_descriptor_set(const std::vector<Tensor>& tensors);
-	void crt_compute_pipeline();
+	void crt_compute_pipeline(const std::vector<VkPushConstantRange>& push_const_ranges);
 
 	void init_op();
 
