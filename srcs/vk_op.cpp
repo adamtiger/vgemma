@@ -134,8 +134,11 @@ void Operator::crt_descriptor_set(const std::vector<Tensor>& tensors)
 		buf_info.offset = 0;
 		buf_info.range = VK_WHOLE_SIZE;
 
-		buf_infos.push_back(buf_info);  // TODO: without this, memory disappears in the below part
+		buf_infos.push_back(buf_info);  // TODO: without this, memory disappears in the below part, can resize the vector, pointers would not be fixed
+	}
 
+	for (u32 ix = 0; ix < tensors.size(); ++ix)
+	{
 		VkWriteDescriptorSet wrt_descr_set = {};
 		wrt_descr_set.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		wrt_descr_set.dstBinding = ix;
@@ -195,7 +198,8 @@ void Operator::crt_compute_pipeline(const std::vector<VkPushConstantRange>& push
 
 void Operator::init_op()
 {
-	crt_descriptor_set(list_tensors());
+	auto tensors = list_tensors();
+	crt_descriptor_set(tensors);
 
 	auto push_const_ranges = crt_push_constants();
 	crt_compute_pipeline(push_const_ranges);

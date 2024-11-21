@@ -23,12 +23,17 @@ int main()
 	print_tensor(ctx, y);
 
 
+	Tensor x2 = crt_tensor(ctx, DataType::FLOAT32, { 2, 3 });
 	std::vector<f32> x2_data = { -8.f, 4.f, -1.f, 2.f, -9.f, 5.f };
-	copy_to_gpu(ctx, x, x2_data);
-	relu.execute();
+	copy_to_gpu(ctx, x2, x2_data);
 
-	print_tensor(ctx, x);
-	print_tensor(ctx, y);
+	Tensor y2 = crt_tensor(ctx, DataType::FLOAT32, { 2, 3 });
+
+	Relu relu2(ctx, x2, y2);
+	relu2.execute();
+
+	print_tensor(ctx, x2);
+	print_tensor(ctx, y2);
 
 	return 0;
 }
