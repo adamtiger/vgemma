@@ -11,3 +11,7 @@ sudo apt-get install libvulkan-dev libvulkan1
 sudo apt-get install glslang-tools glslang-dev glslc
 ```
 
+## References
+
+- [data structures in the shader](https://docs.vulkan.org/guide/latest/mapping_data_to_shaders.html)
+
